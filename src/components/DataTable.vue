@@ -6,6 +6,7 @@
                     <b-col md="4" offset-md="8">
                         <b-form-input
                             type="text"
+                            v-model="search"
                             placeholder="Search...">
                         </b-form-input>
                     </b-col>
@@ -34,7 +35,7 @@
             </div>
         </b-modal>
 
-        <b-table :items="memberLists" :fields="fields">
+        <b-table :items="membersProcessed" :fields="fields">
             <template slot="action" slot-scope="data">
                 <b-button variant="info" size="sm" @click="showModal('EDIT', data)">edit</b-button>
                 <b-button @click="REMOVE_MEMBER(data.index)" variant="danger" size="sm">delete</b-button>
@@ -60,11 +61,23 @@ export default {
       age: "",
       modalTitle: "",
       isBtnAdd: false,
-      isBtnEdit: false
+      isBtnEdit: false,
+      search: ""
     };
   },
   computed: {
-    ...mapGetters(["memberLists"])
+    ...mapGetters(["memberLists"]),
+    membersProcessed() {
+      let src = this.search.trim().toLowerCase();
+      if (!this.search.length) {
+        return this.memberLists;
+      }
+      return this.memberLists.filter(function(member) {
+        if (member.name.toLowerCase().indexOf(src) != -1) {
+          return member;
+        }
+      });
+    }
   },
   mounted() {
     this.FETCH_MEMBERS();
@@ -117,6 +130,9 @@ export default {
       } else {
         this.hideModal();
       }
+    },
+    handleSearch(e) {
+      console.log(e);
     }
   }
 };
