@@ -12,11 +12,11 @@
                 </b-row>
             </b-col>
             <b-col md="2">
-                <b-button variant="success" @click="showModal">Add member</b-button>
+                <b-button variant="success" @click="showModal('ADD')">Add member</b-button>
             </b-col>
         </b-row>
         
-        <b-modal ref="modalAddMember" title="Add new member" hide-footer>
+        <b-modal ref="modalMember" :title="modalTitle" hide-footer>
             
             <b-form-input v-model="name"
                   class="mb-2"
@@ -29,14 +29,15 @@
 
             <div class="float-right">
                 <b-btn variant="danger" @click="hideModal">cancel</b-btn>
-                <b-btn variant="success" @click="handleAddMember">Add</b-btn>
+                <b-btn variant="success" @click="handleAddMember" v-show="isBtnAdd">Add</b-btn>
+                <b-btn variant="primary" @click="handleEditMember" v-show="isBtnEdit">Edit</b-btn>
             </div>
         </b-modal>
 
         <b-table :items="memberLists" :fields="fields">
             <template slot="action" slot-scope="data">
-                <b-button variant="info" size="sm">edit</b-button>
-                <b-button @click="REMOVE_ITEM(data.index)" variant="danger" size="sm">delete</b-button>
+                <b-button variant="info" size="sm" @click="showModal('EDIT', data)">edit</b-button>
+                <b-button @click="REMOVE_MEMBER(data.index)" variant="danger" size="sm">delete</b-button>
             </template>
         </b-table>
     </div>
@@ -54,27 +55,65 @@ export default {
         { key: "age", sortable: true },
         { key: "action" }
       ],
+      id: "",
       name: "",
-      age: ""
+      age: "",
+      modalTitle: "",
+      isBtnAdd: false,
+      isBtnEdit: false
     };
   },
   computed: {
     ...mapGetters(["memberLists"])
   },
+  mounted() {
+    this.FETCH_MEMBERS();
+  },
   methods: {
-    ...mapActions(["REMOVE_ITEM", "ADD_ITEM"]),
-    showModal() {
-      this.$refs.modalAddMember.show();
+    ...mapActions([
+      "REMOVE_MEMBER",
+      "ADD_MEMBER",
+      "FETCH_MEMBERS",
+      "EDIT_MEMBER"
+    ]),
+    showModal(type, data = null) {
+      this.name = "";
+      this.age = "";
+      switch (type) {
+        case "ADD":
+          this.modalTitle = "Add new member";
+          this.isBtnEdit = false;
+          this.isBtnAdd = true;
+          break;
+        case "EDIT":
+          this.name = data.item.name;
+          this.age = data.item.age;
+          this.id = data.item._id;
+          this.modalTitle = "Edit member";
+          this.isBtnAdd = false;
+          this.isBtnEdit = true;
+          break;
+      }
+      this.$refs.modalMember.show();
     },
     hideModal() {
-      this.$refs.modalAddMember.hide();
+      this.$refs.modalMember.hide();
     },
     handleAddMember() {
-      if (this.name !== "" || this.age !== "") {
-        this.ADD_ITEM({ name: this.name, age: this.age });
+      if (this.name !== "" && this.age !== "") {
+        this.ADD_MEMBER({ name: this.name, age: this.age });
         this.hideModal();
-        this.name = "";
-        this.age = "";
+      } else {
+        this.hideModal();
+      }
+    },
+    handleEditMember() {
+      if (this.name !== "" && this.age !== "") {
+        this.EDIT_MEMBER({
+          id: this.id,
+          data: { name: this.name, age: this.age }
+        });
+        this.hideModal();
       } else {
         this.hideModal();
       }
